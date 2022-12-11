@@ -15,7 +15,8 @@ Checks: >
   -cppcoreguidelines-avoid-magic-number,
   -readability-magic-numbers,
   -readability-identifier-length,
-  -bugprone-exception-escape
+  -bugprone-exception-escape,
+  -altera-*
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 AnalyzeTemporaryDtors: false

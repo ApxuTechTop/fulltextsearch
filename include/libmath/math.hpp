@@ -1,6 +1,5 @@
 #pragma once
 
-namespace math
-{
-double sum (double left, double right);
+namespace math {
+double sum(double left, double right);
 }
