@@ -21,4 +21,5 @@ target_link_libraries(
 	PRIVATE
 		parser
 		cxxopts
+		nlohmann_json::nlohmann_json
 )
