@@ -25,3 +25,28 @@ target_link_libraries(
 )
 
 gtest_discover_tests(${target_name})
+
+set(parser_target parser_test)
+add_executable(${parser_target})
+
+set_compile_options(${parser_target})
+
+target_sources(
+	${parser_target}
+	PRIVATE
+		parser.test.cpp
+)
+target_include_directories(
+	${parser_target}
+	PUBLIC
+		${PROJECT_SOURCE_DIR}/include
+)
+
+target_link_libraries(
+	${parser_target}
+	PRIVATE
+		parser
+        GTest::gtest_main
+)
+
+gtest_discover_tests(${parser_target})

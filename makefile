@@ -4,13 +4,11 @@ build:
 	cmake --build build/Release
 
 format:
-	clang-format -i src/libmath/math.cpp
-	clang-format -i src/sum-cli/main.cpp
-	clang-format -i tests/math.test.cpp
-	clang-format -i include/libmath/math.hpp
+	git ls-files *.cpp | xargs clang-format -i -style=file --verbose
+	git ls-files *.hpp | xargs clang-format -i -style=file --verbose
 
 test:
-	./build/Release/bin/math_test
+	ctest --preset default
 
 clean:
 	cmake --build build/Release --target clean
