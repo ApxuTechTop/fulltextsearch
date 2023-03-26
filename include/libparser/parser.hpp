@@ -33,11 +33,11 @@ class Configuration {
 	Configuration(int nmin, int nmax, std::vector<std::string> swords)
 		: ngrammin(nmin), ngrammax(nmax), stopwords(swords) {}
 };
-typedef struct {
+struct Term {
 	std::string ngram;
 	size_t index;
-} Term;
+};
 
-std::vector<parser::Term> find_ngrams(std::string &text,
+std::vector<parser::Term> find_ngrams(std::string text,
 									  const parser::Configuration &config);
 }
