@@ -50,3 +50,29 @@ target_link_libraries(
 )
 
 gtest_discover_tests(${parser_target})
+
+
+set(indexer_target indexer_test)
+add_executable(${indexer_target})
+
+set_compile_options(${indexer_target})
+
+target_sources(
+	${indexer_target}
+	PRIVATE
+		indexer.test.cpp
+)
+target_include_directories(
+	${indexer_target}
+	PUBLIC
+		${PROJECT_SOURCE_DIR}/include
+)
+
+target_link_libraries(
+	${indexer_target}
+	PRIVATE
+		indexer
+        GTest::gtest_main
+)
+
+gtest_discover_tests(${indexer_target})
