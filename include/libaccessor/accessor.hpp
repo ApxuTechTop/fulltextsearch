@@ -17,9 +17,11 @@ class TextIndexAccessor : public IndexAccessor {
 	const std::filesystem::path path_to_index;
 
   public:
-	TextIndexAccessor(const std::filesystem::path &path) : path_to_index(path) {};
+	TextIndexAccessor(const std::filesystem::path &path)
+		: path_to_index(path){};
 	std::string load_document(const int document_id) const;
 	std::size_t total_docs() const;
-	std::unordered_map<int, std::vector<std::size_t> > get_term_infos(std::string term) const;
+	std::unordered_map<int, std::vector<std::size_t> >
+	get_term_infos(std::string term) const;
 };
 }

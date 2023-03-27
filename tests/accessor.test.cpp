@@ -3,7 +3,7 @@
 #include <libindexer/indexer.hpp>
 
 TEST(AccessorTests, ExampleTest) {
-    namespace fs = std::filesystem;
+	namespace fs = std::filesystem;
 	const int file_id1 = 199903;
 	const int file_id2 = 200305;
 	const int file_id3 = 200311;
@@ -20,16 +20,16 @@ TEST(AccessorTests, ExampleTest) {
 		builder.add_document(id, text);
 	}
 
-    indexer::TextIndexWriter writer;
-    fs::path path_to_index{"build/index"};
-    writer.write(path_to_index, builder.get_index());
-    accessor::TextIndexAccessor reader(path_to_index);
-    for (const auto& [key, value] : builder.get_index().entries) {
-        ASSERT_EQ(reader.get_term_infos(key), value);
-    }
-    for (const auto& [key, value] : builder.get_index().docs) {
-        ASSERT_EQ(reader.load_document(key), value);
-    }
+	indexer::TextIndexWriter writer;
+	fs::path path_to_index{ "build/index" };
+	writer.write(path_to_index, builder.get_index());
+	accessor::TextIndexAccessor reader(path_to_index);
+	for (const auto &[key, value] : builder.get_index().entries) {
+		ASSERT_EQ(reader.get_term_infos(key), value);
+	}
+	for (const auto &[key, value] : builder.get_index().docs) {
+		ASSERT_EQ(reader.load_document(key), value);
+	}
 	fs::remove_all(path_to_index);
 }
 
@@ -61,7 +61,6 @@ TEST(IndexerTests, SomePositionsTest) {
 	ASSERT_EQ(builder.get_index().entries, index.entries);
 }
 */
-
 
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
