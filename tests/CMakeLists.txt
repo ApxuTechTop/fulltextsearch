@@ -76,3 +76,29 @@ target_link_libraries(
 )
 
 gtest_discover_tests(${indexer_target})
+
+set(accessor_target accessor_test)
+add_executable(${accessor_target})
+
+set_compile_options(${accessor_target})
+
+target_sources(
+	${accessor_target}
+	PRIVATE
+		accessor.test.cpp
+)
+target_include_directories(
+	${accessor_target}
+	PUBLIC
+		${PROJECT_SOURCE_DIR}/include
+)
+
+target_link_libraries(
+	${accessor_target}
+	PRIVATE
+		indexer
+		accessor
+        GTest::gtest_main
+)
+
+gtest_discover_tests(${accessor_target})
