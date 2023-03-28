@@ -29,7 +29,7 @@ class Configuration {
 	int ngrammin;
 	int ngrammax;
 	std::vector<std::string> stopwords;
-	Configuration(){};
+	Configuration() : ngrammin(3), ngrammax(6){};
 	Configuration(int nmin, int nmax, std::vector<std::string> swords)
 		: ngrammin(nmin), ngrammax(nmax), stopwords(swords) {}
 };

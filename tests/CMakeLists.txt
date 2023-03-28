@@ -102,3 +102,30 @@ target_link_libraries(
 )
 
 gtest_discover_tests(${accessor_target})
+
+set(searcher_target searcher_test)
+add_executable(${searcher_target})
+
+set_compile_options(${searcher_target})
+
+target_sources(
+	${searcher_target}
+	PRIVATE
+		searcher.test.cpp
+)
+target_include_directories(
+	${searcher_target}
+	PUBLIC
+		${PROJECT_SOURCE_DIR}/include
+)
+
+target_link_libraries(
+	${searcher_target}
+	PRIVATE
+		indexer
+		accessor
+		searcher
+        GTest::gtest_main
+)
+
+gtest_discover_tests(${searcher_target})
