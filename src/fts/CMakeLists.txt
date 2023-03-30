@@ -1,4 +1,4 @@
-set(target_name fts_indexer)
+set(target_name fts_searcher)
 
 add_executable(${target_name})
 
@@ -20,7 +20,7 @@ target_link_libraries(
 	${target_name}
 	PRIVATE
 		indexer
+		searcher
 		cxxopts
 		nlohmann_json::nlohmann_json
-		rapidcsv
 )
