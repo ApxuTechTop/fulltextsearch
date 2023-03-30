@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <rapidcsv.h>
 
 using json = nlohmann::json;
 
@@ -14,34 +15,37 @@ int main(int argc, char **argv) {
 	cxxopts::Options options("MyIndexer", "Index docs");
 	options.add_options()("index", "Path to index location",
 						  cxxopts::value<std::string>());
-	options.add_options()("stopfile", "Path to stop-words file",
+	options.add_options()("config", "Path to json config file",
 						  cxxopts::value<std::string>());
-	options.add_options()("docsfile", "JSON file with documents",
+	options.add_options()("csv", "JSON file with documents",
 						  cxxopts::value<std::string>());
 
 	auto result = options.parse(argc, argv);
-	std::vector<std::string> stopwords;
-	std::ifstream stopfile(result["stopfile"].as<std::string>());
 
-	std::string tmp_word;
-	while (stopfile >> tmp_word) {
-		stopwords.push_back(tmp_word);
+	json data;
+	std::vector<std::string> stopwords;
+	if (result["config"].count() > 0) {
+		std::ifstream configfile(result["config"].as<std::string>());
+		data = json::parse(configfile);
+		stopwords = data["stopwords"].get<std::vector<std::string> >();
 	}
-	const int min_length = 3;
-	const int max_length = 6;
+	const int min_length
+		= (result["config"].count() > 0) ? data["min"].get<int>() : 3;
+	const int max_length
+		= (result["config"].count() > 0) ? data["max"].get<int>() : 6;
+
 	parser::Configuration config(min_length, max_length, stopwords);
 
+	rapidcsv::Document doc(result["csv"].as<std::string>());
+	std::vector<int> docs_id = doc.GetColumn<int>("bookID");
+	std::vector<std::string> docs_text = doc.GetColumn<std::string>("title");
 	indexer::IndexBuilder builder(config);
-	// std::vector<std::pair<int, std::string>> docs = {{file_id1, "The
-	// Matrix"}, {file_id2, "The Matrix Reloaded"}, {file_id3, "The Matrix
-	// Revolutions"}};
-	std::ifstream jsonfile(result["docsfile"].as<std::string>());
-	json data = json::parse(jsonfile);
-	for (const auto &[id, text] : data["docs"].items()) {
-		builder.add_document(std::stoi(id), text);
+	for (std::size_t i = 0; i < docs_id.size(); ++i) {
+		builder.add_document(docs_id[i], docs_text[i]);
 	}
-	indexer::TextIndexWriter writer;
-	std::string path_to_index = result["index"].as<std::string>();
+
+	const indexer::TextIndexWriter writer;
+	const std::string path_to_index = result["index"].as<std::string>();
 	writer.write(std::filesystem::path{ path_to_index }, builder.get_index());
 	return 0;
 }

@@ -22,4 +22,5 @@ target_link_libraries(
 		indexer
 		cxxopts
 		nlohmann_json::nlohmann_json
+		rapidcsv
 )
