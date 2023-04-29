@@ -35,9 +35,9 @@ if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     endif()
 endif()
 
-add_library(lua STATIC IMPORTED)
-set_property(TARGET lua PROPERTY
-                IMPORTED_LOCATION "./external/lua-5.4.4/install/lib/liblua.a")
+# add_library(lua STATIC IMPORTED)
+# set_property(TARGET lua PROPERTY
+#                 IMPORTED_LOCATION "./external/lua-5.4.4/install/lib/liblua.a")
 
 add_subdirectory(external)
 add_subdirectory(src)

@@ -11,18 +11,21 @@
 
 using json = nlohmann::json;
 
-static void print_results(const std::vector<searcher::Result>& results, const accessor::IndexAccessor& reader) {
+static void print_results(const std::vector<searcher::Result> &results,
+						  const accessor::IndexAccessor &reader) {
 	if (results.empty()) {
 		std::cout << "No results\n";
 		return;
 	}
 	double best_score = results[0].score;
 	for (std::size_t i = 0; i < results.size(); ++i) {
-		const auto& result = results[i];
+		const auto &result = results[i];
 		if (result.score < best_score / 2) {
 			break;
 		}
-		std::cout << (i+1) << "\t" << result.score << "\t" << result.document_id << "\t" <<reader.load_document(result.document_id) << std::endl;
+		std::cout << (i + 1) << "\t" << result.score << "\t"
+				  << result.document_id << "\t"
+				  << reader.load_document(result.document_id) << std::endl;
 	}
 }
 
@@ -49,29 +52,27 @@ int main(int argc, char **argv) {
 		= (result["config"].count() > 0) ? data["max"].get<int>() : 6;
 
 	parser::Configuration config(min_length, max_length, stopwords);
-	
+
 	const std::string path_to_index = result["index"].as<std::string>();
 	accessor::TextIndexAccessor reader(path_to_index);
 	searcher::Searcher finder(reader);
 	if (result["query"].count() > 0) {
-		std::vector<searcher::Result> results = finder.search(result["query"].as<std::string>(), config);
+		std::vector<searcher::Result> results
+			= finder.search(result["query"].as<std::string>(), config);
 		print_results(results, reader);
 		return 0;
 	}
-	do {
+	while (true) {
 		std::string input_query;
 		std::getline(std::cin, input_query);
 		if (input_query.empty()) {
 			break;
 		}
-		std::vector<searcher::Result> results = finder.search(input_query, config);
+		std::vector<searcher::Result> results
+			= finder.search(input_query, config);
 		print_results(results, reader);
 		std::cout << std::endl;
-
-	} while (true);
-
-
-
+	}
 
 	return 0;
 }
