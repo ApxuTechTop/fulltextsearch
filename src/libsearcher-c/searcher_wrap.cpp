@@ -1,12 +1,12 @@
 #include <libsearcher/searcher.hpp>
 #include <libsearcher-c/searcher.h>
-
+#include <iostream>
 
 extern "C" {
 vector_wrap accessor_search(index_accessor accessor, const char* query, Configuration* config) {
     std::vector<std::string> stopwords;
     for (size_t i = 0; i < config->count; ++i) {
-        stopwords.push_back(std::string(config->stopwords[i]));
+        stopwords.emplace_back(config->stopwords[i]);
     }
     parser::Configuration configuration(config->ngrammin, config->ngrammax, stopwords);
     std::string string_query(query);

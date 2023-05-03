@@ -15,7 +15,7 @@ typedef struct {
     const char* path;
 } index_accessor;
 
-void index_load_document(index_accessor accessor, const char* doc_name, char* doc_text);
+void index_load_document(index_accessor accessor, int doc_id, char** doc_text);
 
 #ifdef __cplusplus
 }

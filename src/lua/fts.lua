@@ -1,4 +1,5 @@
-local luafts = require("luafts")
+local luafts = require("libluafts")
+local csv = require("src/lua/csv")
 
 local fts = {}
 
@@ -7,13 +8,22 @@ local indexMeta = {
         accessor = function(index)
             return fts.accessor{type = index.type, path = index.path}
         end,
-        add = function()
-
+        add = function(index, id, text)
+            luafts.add_document(index, id, text)
+        end,
+        write = function(index, options)
+            local options = options or {}
+            options.type = options.type or index.type or "text"
+            options.path = options.path or index.path or error("Expected path for index")
+            if options.type == "text" then
+                print("start writing")
+                luafts.text_index_write(index, options.path)
+            end
         end
     },
-    __gc = function(self) {
+    __gc = function(self) 
         luafts.free_index(self)
-    }
+    end
 }
 local accessorMeta = {
     __index = {
@@ -21,35 +31,25 @@ local accessorMeta = {
             local config = config or accessor.configuration
             local results = luafts.search(accessor, query, config) -- это си функция
             return results
+        end,
+        get = function(accessor, id)
+            return luafts.load_document(accessor, id)
         end
     }
 }
 
-local indexTypes = {}
-indexTypes["text"] = function(index)
-
-end
-indexTypes["binary"] = function(index)
-
-end
-
 fts.index = function(options)
     local index = {}
     index.type = options.type or "text"
-    index.path = options.path or error("Expected path for index")
+    index.path = options.path
     index.configuration = options.configuration
     if options.file then
-        local f = csv.open(options.file)
+        local f = csv.open(options.file, {header = true})
+        print("creating index")
         luafts.create_index(index)
         for fields in f:lines() do
+            --print("add", fields.bookID, fields.title)
             luafts.add_document(index, fields.bookID, fields.title)
-        end
-        if options.path then
-            if index.type == "text" then
-                luafts.text_index_write(index, options.path)
-            elseif index.type == "binary" then
-                
-            end
         end
     end
 

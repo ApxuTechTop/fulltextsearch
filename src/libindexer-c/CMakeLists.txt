@@ -4,6 +4,7 @@ add_library(${target_name} STATIC
 )
 include(CompileOptions)
 set_compile_options(${target_name})
+set_property(TARGET ${target_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(
 	${target_name}
 	PUBLIC
