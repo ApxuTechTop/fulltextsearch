@@ -1,4 +1,4 @@
-.PHONY: build format test clean
+.PHONY: build format test clean install
 build:
 	cmake --preset Release
 	cmake --build build/Release
@@ -12,6 +12,9 @@ test:
 
 clean:
 	cmake --build build/Release --target clean
+
+install:
+	sudo mv build/Release/src/luafts/libluafts.so /usr/local/lib/lua/5.4/libluafts.so
 
 all: format build test
 
