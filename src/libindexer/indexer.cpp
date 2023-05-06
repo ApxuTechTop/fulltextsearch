@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iostream>
+#include <libbinary/binbuffer.hpp>
 #include <libindexer/indexer.hpp>
 
 indexer::IndexBuilder::IndexBuilder(
@@ -51,4 +52,65 @@ void indexer::TextIndexWriter::write(const std::filesystem::path &path,
 		}
 		ofs << std::endl;
 	}
+}
+
+template <class Os> Os &operator<<(Os &ostream, binary::BinaryBuffer bbuf) {
+	ostream.write(bbuf.get().data(), bbuf.get().size());
+	return ostream;
+}
+
+void indexer::BinaryIndexWriter::write(const std::filesystem::path &path,
+									   const indexer::Index &index) const {
+	namespace fs = std::filesystem;
+	fs::create_directories(path);
+	std::fstream ofs(path / "index", std::ios_base::out | std::ios_base::trunc
+										 | std::ios_base::binary);
+
+	// docs section
+	binary::BinaryBuffer docs_buffer;
+	auto [docs_section_start, docs_offsets, docs_section_end]
+		= docs_buffer.write(index.docs);
+
+	// entries section
+	binary::BinaryBuffer entries_buffer;
+	auto [entries_section_start, entries_offsets, entries_section_end]
+		= entries_buffer.write(index.entries, docs_offsets);
+
+	// dictionary section
+	binary::BinaryBuffer dictionary_buffer;
+	tech::Trie<std::size_t> trie;
+	for (const auto &[term, offset] : entries_offsets) {
+		trie.add(term, offset);
+	}
+	dictionary_buffer.write(trie);
+
+	// header section
+	binary::BinaryBuffer bbuf;
+	bbuf.write(static_cast<std::size_t>(4));
+	bbuf.write(std::string("header"));
+	bbuf.write(static_cast<std::size_t>(0));
+	auto [dictionary_name_start, dictionary_name_end]
+		= bbuf.write(std::string("dictionary"));
+	bbuf.write(dictionary_name_end);
+
+	auto [entries_name_start, entries_name_end]
+		= bbuf.write(std::string("entries"));
+	bbuf.write(entries_name_end);
+
+	auto [docs_name_start, docs_name_end] = bbuf.write(std::string("docs"));
+	bbuf.write(docs_name_end);
+
+	auto dictionary_section_offset
+		= std::get<0>(bbuf.write(dictionary_buffer));
+	auto entries_section_offset = std::get<0>(bbuf.write(entries_buffer));
+	auto docs_section_offset = std::get<0>(bbuf.write(docs_buffer));
+
+	bbuf.write_to(&dictionary_section_offset,
+				  sizeof(dictionary_section_offset), dictionary_name_end);
+	bbuf.write_to(&entries_section_offset, sizeof(entries_section_offset),
+				  entries_name_end);
+	bbuf.write_to(&docs_section_offset, sizeof(docs_section_offset),
+				  dictionary_name_end);
+
+	ofs << bbuf;
 }

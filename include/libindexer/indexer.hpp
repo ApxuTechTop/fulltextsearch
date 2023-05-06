@@ -32,4 +32,10 @@ class TextIndexWriter : public IndexWriter {
 	void write(const std::filesystem::path &path,
 			   const Index &index) const override;
 };
+class BinaryIndexWriter : public IndexWriter {
+  public:
+	BinaryIndexWriter(){};
+	void write(const std::filesystem::path &path,
+			   const Index &index) const override;
+};
 }
