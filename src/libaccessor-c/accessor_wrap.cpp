@@ -1,6 +1,6 @@
 #include <cstring>
 #include <libaccessor-c/accessor.h>
-#include <libaccessor/accessor.hpp>
+#include <libaccessor/text_accessor.hpp>
 
 extern "C" {
 void index_load_document(index_accessor accessor, int doc_id,

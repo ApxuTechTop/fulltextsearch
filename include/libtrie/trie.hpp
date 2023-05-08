@@ -1,13 +1,17 @@
+#pragma once
+
+#include <memory>
+#include <unordered_map>
 #include <cstddef>
 namespace tech {
 template <class T> class Trie {
   private:
-	static const std::size_t ALPHABET_SIZE = 26;
 
   public:
 	/* member types */
-
+	using value_type = T;
 	struct Node {
+		/*
 		class Iterator {
 		  protected:
 			Node **children;
@@ -45,64 +49,34 @@ template <class T> class Trie {
 				return old;
 			}
 		};
-		Iterator begin() { return Iterator(children, 0); }
-		Iterator end() { return Iterator(children, ALPHABET_SIZE); }
+		*/
+		//auto begin() { return children.begin(); }
+		//auto end() { return children.end(); }
 		bool is_leaf = false;
 		T value;
-		char letter;
-		Node *children[ALPHABET_SIZE] = { nullptr };
-		Node *parent = nullptr;
-		// check
-		Node *&operator[](char c) { return children[c - 'a']; }
+		std::unordered_map<char, std::shared_ptr<Node>> children;
+		std::weak_ptr<Node> parent;
 		std::size_t has() const {
-			std::size_t count = 0;
-			for (std::size_t i = 0; i < ALPHABET_SIZE; ++i) {
-				if (children[i]) {
-					count++;
-				}
-			}
-			return count;
+			return children.size();
 		}
 		bool has(std::size_t count) const {
-			for (auto i = 0; i < ALPHABET_SIZE; ++i) {
-				if (children[i]) {
-					count--;
-					if (count < 0)
-						return false;
-				}
-			}
-			return count == 0;
+			return children.size() == count;
 		}
 		Node() = default;
-		Node(Node *ptr, char c) : letter(c), parent(ptr) {}
+		Node(std::weak_ptr<Node> ptr) : parent(ptr) {}
 		Node(const Node &node) {
 			is_leaf = node.is_leaf;
 			value = node.value;
 			parent = node.parent;
-			letter = node.letter;
-			for (std::size_t i = 0; i < ALPHABET_SIZE; ++i) {
-				if (node.children[i]) {
-					children[i] = new Node(*(node.children[i]));
-				}
-			}
+			children = node.children;
 		}
 		Node(Node &&node) {
 			is_leaf = node.is_leaf;
 			value = std::move(node.value);
-			parent = node.parent;
-			letter = node.letter;
-			for (auto i = 0; i < ALPHABET_SIZE; ++i) {
-				if (node.children[i]) {
-					children[i] = new Node(std::move(*(node.children[i])));
-				}
-			}
+			parent = std::move(node.parent);
+			children = std::move(node.children);
 		}
 		Node(const T &_value) : value(_value), is_leaf(true) {}
-		~Node() {
-			for (std::size_t i = 0; i < ALPHABET_SIZE; ++i) {
-				delete children[i];
-			}
-		}
 	};
 	class Iterator {
 	  protected:
@@ -142,65 +116,82 @@ template <class T> class Trie {
 	Iterator end() { return Iterator(nullptr); }
 
 	/* constructors */
-	Trie() { root = new Node(); }
+	Trie() { root = std::shared_ptr<Node>(new Node()); }
 
 	/* rule of 5 */
-	~Trie() { clean(); }
 	Trie &operator=(const Trie &trie) {
-		clean();
-		root = new Node(*trie.root);
+		root = std::shared_ptr<Node>(new Node(trie.root));
 	}
 	Trie &operator=(Trie &&trie) {
-		clean();
-		root = trie.root;
+		root = std::move(trie.root);
 	}
-	Trie(const Trie &trie) { root = new Node(*trie.root, 0); }
+	Trie(const Trie &trie) { root = std::shared_ptr<Node>(new Node(trie.root)); }
 	Trie(Trie &&trie) {
 		root = trie.root;
 		trie.root = nullptr;
 	}
 	class Nodes {
-		Node *root;
-
-	  public:
+		public:
+		std::shared_ptr<Node> root;
 		class Iterator {
 		  protected:
-			Node *current;
+			std::shared_ptr<Node> current;
 
 		  public:
 			using difference_type = std::ptrdiff_t;
-			using value_type = Node;
+			using value_type = std::shared_ptr<Node>;
 			using pointer = Node *;
-			using reference = Node &;
+			using reference = std::shared_ptr<Node> &;
 			using iterator_category = std::forward_iterator_tag;
-			explicit Iterator(Node *ptr) : current(ptr) {}
+			explicit Iterator(std::shared_ptr<Node> ptr) : current(ptr) {}
 			Iterator(const Iterator &it) = default;
-			reference operator*() { return *current; }
+			reference operator*() { return current; }
 			pointer operator->() { return current; }
 			bool operator==(const Iterator &another) const {
 				return current == another.current;
-			}
-			bool operator!=(const Iterator &another) const {
-				return current != another.current;
 			}
 			Iterator &operator++() {
 				if (!current) {
 					return *this;
 				}
-				if (current->begin() == current->end()) {
+				if (current->children.begin() == current->children.end()) {
 					// если у текущего узла нет потомков
 					// то необходимо вернуться к родителю
 					// и перейти к потомку который после него
-					Node *parent = current->parent;
-					auto it = parent->begin();
-					while (*it != current) {
+					std::shared_ptr<Node> parent;
+					while (parent = current->parent.lock()) {
+						auto it = parent->children.begin();
+						while (it->second != current) {
+							++it;
+						}
 						++it;
+						if (it == parent->children.end()) {
+							current = parent;
+						} else {
+							current = (it)->second;
+							break;
+						}
 					}
-					current = *(++it);
-					// если этого потомка нет (крайний правый)
-					// то ничего не делаем?
+					if (parent == nullptr) {
+						current = nullptr;
+					}
+					// if (std::shared_ptr<Node> parent = current->parent.lock()) {
+					// 	auto it = parent->children.begin();
+					// 	while (it->second != current) {
+					// 		++it;
+					// 	}
+					// 	// it->second == current значит мы нашли себя
+					// 	++it; // следующий в очереди после нас
+					// 	if (it == parent->children.end()) { // если после нас никого нет
+					// 		current = nullptr;
+					// 	} else {
+					// 		current = (it)->second;
+					// 	}
+					// 	// если этого потомка нет (крайний правый)
+					// 	// то ничего не делаем?
+					// }
 				} else {
-					current = *(++(current->begin()));
+					current = ((current->children.begin()))->second;
 				}
 
 				return *this;
@@ -213,38 +204,37 @@ template <class T> class Trie {
 		};
 		Iterator begin() { return Iterator(root); }
 		Iterator end() { return Iterator(nullptr); }
-		Nodes(Node *node) : root(node) {}
+		Nodes(std::shared_ptr<Node> node) : root(node) {}
 	};
 	Nodes nodes() const { return Nodes(root); }
 
 	void add(const std::string &text, T value) {
-		Node *current = root;
+		std::shared_ptr<Node> current = root;
 		for (const char &sym : text) {
-			if ((*current)[sym]) {
-				(*current)[sym] = new Node(current, sym);
+			if (!current->children[sym]) {
+				current->children[sym] = std::shared_ptr<Node>(new Node(current));
 			}
-			current = (*current)[sym];
+			current = current->children[sym];
 		}
 		current->is_leaf = true;
 		current->value = value;
 	}
 	void remove(const std::string &text) {
-		Node *last_branch = nullptr;
-		Node *current = root;
+		std::shared_ptr<Node> current = root;
+		std::shared_ptr<Node>& last_branch = current;
 		for (const auto &sym : text) {
-			if (!(*current)[sym]) {
+			if (!current->children[sym]) {
 				return;
 			}
 			if (current->has() > 1) {
-				last_branch = (*current)[sym]; // CHECK
+				last_branch = current->children[sym]; // CHECK
 			}
-			current = (*current)[sym];
+			current = current->children[sym];
 		}
-		delete last_branch;
+		last_branch.reset();
 	}
 
   private:
-	Node *root;
-	void clean() { delete root; }
+	std::shared_ptr<Node> root;
 };
 }

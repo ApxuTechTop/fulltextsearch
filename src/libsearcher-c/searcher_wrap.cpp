@@ -1,4 +1,5 @@
 #include <iostream>
+#include <libaccessor/text_accessor.hpp>
 #include <libsearcher-c/searcher.h>
 #include <libsearcher/searcher.hpp>
 

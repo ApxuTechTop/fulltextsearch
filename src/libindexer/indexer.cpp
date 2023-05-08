@@ -41,7 +41,7 @@ void indexer::TextIndexWriter::write(const std::filesystem::path &path,
 		strstream << std::hex << std::hash<std::string>{}(term);
 		std::fstream ofs(
 			entries_path / fs::path{ (strstream.str().substr(0, hashsize)) },
-			std::ios_base::out | std::ios_base::ate);
+			std::ios_base::app);
 		strstream.str("");
 		ofs << term << " " << entries.size() << " ";
 		for (const auto &[id, positions] : entries) {
@@ -63,42 +63,57 @@ void indexer::BinaryIndexWriter::write(const std::filesystem::path &path,
 									   const indexer::Index &index) const {
 	namespace fs = std::filesystem;
 	fs::create_directories(path);
-	std::fstream ofs(path / "index", std::ios_base::out | std::ios_base::trunc
+	std::fstream ofs(path / "index", std::ios_base::out
 										 | std::ios_base::binary);
 
 	// docs section
+	std::cout << "Start docs section\n";
 	binary::BinaryBuffer docs_buffer;
+	struct {
+		std::uint32_t operator[](int i) { return static_cast<std::uint32_t>(i); }
+	} fk;
 	auto [docs_section_start, docs_offsets, docs_section_end]
-		= docs_buffer.write(index.docs);
-
+		= docs_buffer.write(index.docs, fk);
+	std::ofstream docsf(path / "docs");
+	docsf << docs_buffer;
 	// entries section
+	std::cout << "Start entries section\n";
 	binary::BinaryBuffer entries_buffer;
 	auto [entries_section_start, entries_offsets, entries_section_end]
 		= entries_buffer.write(index.entries, docs_offsets);
-
+	std::ofstream entriesf(path / "entries");
+	entriesf << entries_buffer;
 	// dictionary section
+	std::cout << "Start dictionary section\n";
 	binary::BinaryBuffer dictionary_buffer;
-	tech::Trie<std::size_t> trie;
+	tech::Trie<std::uint32_t> trie;
 	for (const auto &[term, offset] : entries_offsets) {
+		//std::cout << term << " -> " << std::hex << offset << '\n';
 		trie.add(term, offset);
 	}
+	std::cout << "Start write trie\n";
 	dictionary_buffer.write(trie);
-
+	std::ofstream trief(path / "trie");
+	trief << dictionary_buffer;
 	// header section
+	std::cout << "Start header section\n";
 	binary::BinaryBuffer bbuf;
-	bbuf.write(static_cast<std::size_t>(4));
+	bbuf.write(static_cast<std::uint8_t>(4));
 	bbuf.write(std::string("header"));
-	bbuf.write(static_cast<std::size_t>(0));
+	bbuf.write(static_cast<std::uint32_t>(0));
 	auto [dictionary_name_start, dictionary_name_end]
 		= bbuf.write(std::string("dictionary"));
-	bbuf.write(dictionary_name_end);
+	std::cout << std::hex << dictionary_name_start << dictionary_name_end << " = dictionary_name_end\n";
+	bbuf.write(static_cast<std::uint32_t>(0));
 
 	auto [entries_name_start, entries_name_end]
 		= bbuf.write(std::string("entries"));
-	bbuf.write(entries_name_end);
+	std::cout << std::hex << entries_name_start << entries_name_end << " = entries_name_end\n";
+	bbuf.write(static_cast<std::uint32_t>(0));
 
 	auto [docs_name_start, docs_name_end] = bbuf.write(std::string("docs"));
-	bbuf.write(docs_name_end);
+	std::cout << std::hex << docs_name_start << docs_name_end << " = docs_name_end\n";
+	bbuf.write(static_cast<std::uint32_t>(0));
 
 	auto dictionary_section_offset
 		= std::get<0>(bbuf.write(dictionary_buffer));
@@ -106,11 +121,11 @@ void indexer::BinaryIndexWriter::write(const std::filesystem::path &path,
 	auto docs_section_offset = std::get<0>(bbuf.write(docs_buffer));
 
 	bbuf.write_to(&dictionary_section_offset,
-				  sizeof(dictionary_section_offset), dictionary_name_end);
-	bbuf.write_to(&entries_section_offset, sizeof(entries_section_offset),
+				  4, dictionary_name_end);
+	bbuf.write_to(&entries_section_offset, 4,
 				  entries_name_end);
-	bbuf.write_to(&docs_section_offset, sizeof(docs_section_offset),
-				  dictionary_name_end);
+	bbuf.write_to(&docs_section_offset, 4,
+				  docs_name_end);
 
 	ofs << bbuf;
 }

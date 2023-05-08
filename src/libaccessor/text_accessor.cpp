@@ -1,5 +1,5 @@
 #include <fstream>
-#include <libaccessor/accessor.hpp>
+#include <libaccessor/text_accessor.hpp>
 
 static const auto docs_dir = "docs";
 static const auto entries_dir = "entries";
@@ -18,7 +18,7 @@ std::size_t accessor::TextIndexAccessor::total_docs() const {
 						 fs::directory_iterator());
 }
 std::unordered_map<int, std::vector<std::size_t> >
-accessor::TextIndexAccessor::get_term_infos(std::string term) const {
+accessor::TextIndexAccessor::get_term_infos(const std::string &term) const {
 	std::unordered_map<int, std::vector<std::size_t> > term_info;
 	const int hashsize = 6;
 	std::stringstream strstream;
