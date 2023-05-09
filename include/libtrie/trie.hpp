@@ -1,12 +1,11 @@
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <unordered_map>
-#include <cstddef>
 namespace tech {
 template <class T> class Trie {
   private:
-
   public:
 	/* member types */
 	using value_type = T;
@@ -50,18 +49,14 @@ template <class T> class Trie {
 			}
 		};
 		*/
-		//auto begin() { return children.begin(); }
-		//auto end() { return children.end(); }
+		// auto begin() { return children.begin(); }
+		// auto end() { return children.end(); }
 		bool is_leaf = false;
 		T value;
-		std::unordered_map<char, std::shared_ptr<Node>> children;
+		std::unordered_map<char, std::shared_ptr<Node> > children;
 		std::weak_ptr<Node> parent;
-		std::size_t has() const {
-			return children.size();
-		}
-		bool has(std::size_t count) const {
-			return children.size() == count;
-		}
+		std::size_t has() const { return children.size(); }
+		bool has(std::size_t count) const { return children.size() == count; }
 		Node() = default;
 		Node(std::weak_ptr<Node> ptr) : parent(ptr) {}
 		Node(const Node &node) {
@@ -122,16 +117,16 @@ template <class T> class Trie {
 	Trie &operator=(const Trie &trie) {
 		root = std::shared_ptr<Node>(new Node(trie.root));
 	}
-	Trie &operator=(Trie &&trie) {
-		root = std::move(trie.root);
+	Trie &operator=(Trie &&trie) { root = std::move(trie.root); }
+	Trie(const Trie &trie) {
+		root = std::shared_ptr<Node>(new Node(trie.root));
 	}
-	Trie(const Trie &trie) { root = std::shared_ptr<Node>(new Node(trie.root)); }
 	Trie(Trie &&trie) {
 		root = trie.root;
 		trie.root = nullptr;
 	}
 	class Nodes {
-		public:
+	  public:
 		std::shared_ptr<Node> root;
 		class Iterator {
 		  protected:
@@ -175,17 +170,17 @@ template <class T> class Trie {
 					if (parent == nullptr) {
 						current = nullptr;
 					}
-					// if (std::shared_ptr<Node> parent = current->parent.lock()) {
-					// 	auto it = parent->children.begin();
-					// 	while (it->second != current) {
+					// if (std::shared_ptr<Node> parent =
+					// current->parent.lock()) { 	auto it =
+					// parent->children.begin(); 	while (it->second != current)
+					// {
 					// 		++it;
 					// 	}
 					// 	// it->second == current значит мы нашли себя
 					// 	++it; // следующий в очереди после нас
-					// 	if (it == parent->children.end()) { // если после нас никого нет
-					// 		current = nullptr;
-					// 	} else {
-					// 		current = (it)->second;
+					// 	if (it == parent->children.end()) { // если после нас
+					// никого нет 		current = nullptr; 	} else { 		current =
+					// (it)->second;
 					// 	}
 					// 	// если этого потомка нет (крайний правый)
 					// 	// то ничего не делаем?
@@ -212,7 +207,8 @@ template <class T> class Trie {
 		std::shared_ptr<Node> current = root;
 		for (const char &sym : text) {
 			if (!current->children[sym]) {
-				current->children[sym] = std::shared_ptr<Node>(new Node(current));
+				current->children[sym]
+					= std::shared_ptr<Node>(new Node(current));
 			}
 			current = current->children[sym];
 		}
@@ -221,7 +217,7 @@ template <class T> class Trie {
 	}
 	void remove(const std::string &text) {
 		std::shared_ptr<Node> current = root;
-		std::shared_ptr<Node>& last_branch = current;
+		std::shared_ptr<Node> &last_branch = current;
 		for (const auto &sym : text) {
 			if (!current->children[sym]) {
 				return;

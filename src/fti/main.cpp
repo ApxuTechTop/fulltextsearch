@@ -47,8 +47,7 @@ int main(int argc, char **argv) {
 	}
 	const std::string type = result["type"].as<std::string>();
 	// const indexer::IndexWriter& writer = (type == "text") ?
-	// indexer::TextIndexWriter() : indexer::BinaryIndexWriter(); // почему это
-	// не работает!!!
+	// indexer::TextIndexWriter() : indexer::BinaryIndexWriter();
 	if (type == "text") {
 		const indexer::TextIndexWriter writer;
 		const std::string path_to_index = result["index"].as<std::string>();

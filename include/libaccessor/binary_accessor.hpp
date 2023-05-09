@@ -18,8 +18,6 @@ class EntriesAccessor {
 	char *data = nullptr;
 	std::size_t section_offset = 0;
 	EntriesAccessor(char *ptr = nullptr);
-	std::unordered_map<int, std::vector<std::size_t> >
-	get_term_infos(const std::size_t offset) const;
 };
 
 class DocumentsAccessor {
@@ -35,7 +33,6 @@ class BinaryIndexAccessor : public IndexAccessor {
   private:
 	const std::filesystem::path path_to_index;
 	std::vector<char> data;
-	//std::size_t length = 0;
 	DictionaryAccessor dictionary_accessor;
 	EntriesAccessor entries_accessor;
 	DocumentsAccessor documents_accessor;

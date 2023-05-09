@@ -13,7 +13,7 @@ vector_wrap accessor_search(index_accessor accessor, const char *query,
 	parser::Configuration configuration(config->ngrammin, config->ngrammax,
 										stopwords);
 	std::string string_query(query);
-	std::vector<searcher::Result> *results; // ????
+	std::vector<searcher::Result> *results = nullptr; // ????
 	if (accessor.type == index_accessor_type_text) {
 		accessor::TextIndexAccessor reader(std::string(accessor.path));
 		searcher::Searcher finder(reader);

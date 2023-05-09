@@ -25,7 +25,7 @@ static void print_results(const std::vector<searcher::Result> &results,
 		if (result.score < best_score / 2) {
 			break;
 		}
-		std::cout << (i + 1) << "\t" << result.score << "\t"
+		std::cout << (i + 1) << "\t" << result.score << "\t" << std::dec
 				  << result.document_id << "\t"
 				  << reader.load_document(result.document_id) << std::endl;
 	}

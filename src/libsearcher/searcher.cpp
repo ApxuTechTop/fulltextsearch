@@ -1,5 +1,7 @@
 #include <algorithm>
 #include <cmath>
+#include <exception>
+#include <iostream>
 #include <libsearcher/searcher.hpp>
 
 std::vector<searcher::Result>
@@ -26,7 +28,12 @@ searcher::Searcher::search(std::string query,
 							  / static_cast<double>(df));
 		}
 	}
-	results.reserve(scores.size());
+	try {
+		results.reserve(scores.size());
+	} catch (const std::exception &e) {
+		std::cout << e.what() << ' ' << scores.size() << '\n';
+	}
+
 	for (const auto [doc_id, score] : scores) {
 		results.push_back(searcher::Result{ score, doc_id });
 	}

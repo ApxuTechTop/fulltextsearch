@@ -63,14 +63,16 @@ void indexer::BinaryIndexWriter::write(const std::filesystem::path &path,
 									   const indexer::Index &index) const {
 	namespace fs = std::filesystem;
 	fs::create_directories(path);
-	std::fstream ofs(path / "index", std::ios_base::out
-										 | std::ios_base::binary);
+	std::fstream ofs(path / "index",
+					 std::ios_base::out | std::ios_base::binary);
 
 	// docs section
 	std::cout << "Start docs section\n";
 	binary::BinaryBuffer docs_buffer;
 	struct {
-		std::uint32_t operator[](int i) { return static_cast<std::uint32_t>(i); }
+		std::uint32_t operator[](int i) {
+			return static_cast<std::uint32_t>(i);
+		}
 	} fk;
 	auto [docs_section_start, docs_offsets, docs_section_end]
 		= docs_buffer.write(index.docs, fk);
@@ -88,7 +90,7 @@ void indexer::BinaryIndexWriter::write(const std::filesystem::path &path,
 	binary::BinaryBuffer dictionary_buffer;
 	tech::Trie<std::uint32_t> trie;
 	for (const auto &[term, offset] : entries_offsets) {
-		//std::cout << term << " -> " << std::hex << offset << '\n';
+		// std::cout << term << " -> " << std::hex << offset << '\n';
 		trie.add(term, offset);
 	}
 	std::cout << "Start write trie\n";
@@ -103,16 +105,19 @@ void indexer::BinaryIndexWriter::write(const std::filesystem::path &path,
 	bbuf.write(static_cast<std::uint32_t>(0));
 	auto [dictionary_name_start, dictionary_name_end]
 		= bbuf.write(std::string("dictionary"));
-	std::cout << std::hex << dictionary_name_start << dictionary_name_end << " = dictionary_name_end\n";
+	std::cout << std::hex << dictionary_name_start << dictionary_name_end
+			  << " = dictionary_name_end\n";
 	bbuf.write(static_cast<std::uint32_t>(0));
 
 	auto [entries_name_start, entries_name_end]
 		= bbuf.write(std::string("entries"));
-	std::cout << std::hex << entries_name_start << entries_name_end << " = entries_name_end\n";
+	std::cout << std::hex << entries_name_start << entries_name_end
+			  << " = entries_name_end\n";
 	bbuf.write(static_cast<std::uint32_t>(0));
 
 	auto [docs_name_start, docs_name_end] = bbuf.write(std::string("docs"));
-	std::cout << std::hex << docs_name_start << docs_name_end << " = docs_name_end\n";
+	std::cout << std::hex << docs_name_start << docs_name_end
+			  << " = docs_name_end\n";
 	bbuf.write(static_cast<std::uint32_t>(0));
 
 	auto dictionary_section_offset
@@ -120,12 +125,9 @@ void indexer::BinaryIndexWriter::write(const std::filesystem::path &path,
 	auto entries_section_offset = std::get<0>(bbuf.write(entries_buffer));
 	auto docs_section_offset = std::get<0>(bbuf.write(docs_buffer));
 
-	bbuf.write_to(&dictionary_section_offset,
-				  4, dictionary_name_end);
-	bbuf.write_to(&entries_section_offset, 4,
-				  entries_name_end);
-	bbuf.write_to(&docs_section_offset, 4,
-				  docs_name_end);
+	bbuf.write_to(&dictionary_section_offset, 4, dictionary_name_end);
+	bbuf.write_to(&entries_section_offset, 4, entries_name_end);
+	bbuf.write_to(&docs_section_offset, 4, docs_name_end);
 
 	ofs << bbuf;
 }
