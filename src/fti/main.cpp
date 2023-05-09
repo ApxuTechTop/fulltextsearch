@@ -19,6 +19,8 @@ int main(int argc, char **argv) {
 						  cxxopts::value<std::string>());
 	options.add_options()("csv", "JSON file with documents",
 						  cxxopts::value<std::string>());
+	options.add_options()("type", "Type of index writer",
+						  cxxopts::value<std::string>());
 
 	auto result = options.parse(argc, argv);
 
@@ -43,9 +45,19 @@ int main(int argc, char **argv) {
 	for (std::size_t i = 0; i < docs_id.size(); ++i) {
 		builder.add_document(docs_id[i], docs_text[i]);
 	}
-
-	const indexer::TextIndexWriter writer;
-	const std::string path_to_index = result["index"].as<std::string>();
-	writer.write(std::filesystem::path{ path_to_index }, builder.get_index());
+	const std::string type = result["type"].as<std::string>();
+	// const indexer::IndexWriter& writer = (type == "text") ?
+	// indexer::TextIndexWriter() : indexer::BinaryIndexWriter();
+	if (type == "text") {
+		const indexer::TextIndexWriter writer;
+		const std::string path_to_index = result["index"].as<std::string>();
+		writer.write(std::filesystem::path{ path_to_index },
+					 builder.get_index());
+	} else {
+		const indexer::BinaryIndexWriter writer;
+		const std::string path_to_index = result["index"].as<std::string>();
+		writer.write(std::filesystem::path{ path_to_index },
+					 builder.get_index());
+	}
 	return 0;
 }

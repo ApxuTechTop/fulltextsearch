@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <libaccessor/accessor.hpp>
+#include <libaccessor/text_accessor.hpp>
 #include <libindexer/indexer.hpp>
 
 TEST(AccessorTests, ExampleTest) {

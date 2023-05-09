@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <libaccessor/binary_accessor.hpp>
+#include <libaccessor/text_accessor.hpp>
 #include <libindexer/indexer.hpp>
 #include <libsearcher/searcher.hpp>
 
@@ -23,7 +25,7 @@ static void print_results(const std::vector<searcher::Result> &results,
 		if (result.score < best_score / 2) {
 			break;
 		}
-		std::cout << (i + 1) << "\t" << result.score << "\t"
+		std::cout << (i + 1) << "\t" << result.score << "\t" << std::dec
 				  << result.document_id << "\t"
 				  << reader.load_document(result.document_id) << std::endl;
 	}
@@ -36,6 +38,8 @@ int main(int argc, char **argv) {
 	options.add_options()("config", "Path to json config file",
 						  cxxopts::value<std::string>());
 	options.add_options()("query", "JSON file with documents",
+						  cxxopts::value<std::string>());
+	options.add_options()("type", "Type of index accessor",
 						  cxxopts::value<std::string>());
 
 	auto result = options.parse(argc, argv);
@@ -54,7 +58,13 @@ int main(int argc, char **argv) {
 	parser::Configuration config(min_length, max_length, stopwords);
 
 	const std::string path_to_index = result["index"].as<std::string>();
-	accessor::TextIndexAccessor reader(path_to_index);
+	const std::string type = result["type"].as<std::string>();
+	accessor::BinaryIndexAccessor binary_accessor(path_to_index);
+	accessor::TextIndexAccessor text_accessor(path_to_index);
+	const accessor::IndexAccessor &reader
+		= type == "text"
+			  ? static_cast<accessor::IndexAccessor &>(text_accessor)
+			  : static_cast<accessor::IndexAccessor &>(binary_accessor);
 	searcher::Searcher finder(reader);
 	if (result["query"].count() > 0) {
 		std::vector<searcher::Result> results
