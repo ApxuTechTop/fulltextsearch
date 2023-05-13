@@ -67,57 +67,49 @@ void indexer::BinaryIndexWriter::write(const std::filesystem::path &path,
 					 std::ios_base::out | std::ios_base::binary);
 
 	// docs section
-	std::cout << "Start docs section\n";
 	binary::BinaryBuffer docs_buffer;
-	struct {
-		std::uint32_t operator[](int i) {
-			return static_cast<std::uint32_t>(i);
-		}
-	} fk;
-	auto [docs_section_start, docs_offsets, docs_section_end]
-		= docs_buffer.write(index.docs, fk);
-	std::ofstream docsf(path / "docs");
-	docsf << docs_buffer;
+	std::unordered_map<int, std::uint32_t> docs_offsets;
+	for (const auto& [doc_id, text] : index.docs) {
+		docs_offsets[doc_id] = std::get<0>(docs_buffer.write(doc_id));
+		docs_buffer.write(text);
+	}
 	// entries section
-	std::cout << "Start entries section\n";
 	binary::BinaryBuffer entries_buffer;
-	auto [entries_section_start, entries_offsets, entries_section_end]
-		= entries_buffer.write(index.entries, docs_offsets);
-	std::ofstream entriesf(path / "entries");
-	entriesf << entries_buffer;
+	std::unordered_map<std::string, std::uint32_t> entries_offsets;
+	for (const auto &[key, docs] : index.entries) {
+		entries_offsets[key] = std::get<0>(entries_buffer.write(static_cast<std::uint32_t>(docs.size())));
+		for (const auto& [doc_id, positions] : docs) {
+			entries_buffer.write(docs_offsets[doc_id]);
+			entries_buffer.write(static_cast<std::uint32_t>(positions.size()));
+			for (const auto& pos : positions) {
+				entries_buffer.write(static_cast<std::uint32_t>(pos));
+			}
+		}
+	}
+	// auto [entries_section_start, entries_offsets, entries_section_end]
+	// 	= entries_buffer.write(index.entries, docs_offsets);
 	// dictionary section
-	std::cout << "Start dictionary section\n";
 	binary::BinaryBuffer dictionary_buffer;
 	tech::Trie<std::uint32_t> trie;
 	for (const auto &[term, offset] : entries_offsets) {
 		// std::cout << term << " -> " << std::hex << offset << '\n';
 		trie.add(term, offset);
 	}
-	std::cout << "Start write trie\n";
 	dictionary_buffer.write(trie);
-	std::ofstream trief(path / "trie");
-	trief << dictionary_buffer;
 	// header section
-	std::cout << "Start header section\n";
 	binary::BinaryBuffer bbuf;
 	bbuf.write(static_cast<std::uint8_t>(4));
 	bbuf.write(std::string("header"));
 	bbuf.write(static_cast<std::uint32_t>(0));
 	auto [dictionary_name_start, dictionary_name_end]
 		= bbuf.write(std::string("dictionary"));
-	std::cout << std::hex << dictionary_name_start << dictionary_name_end
-			  << " = dictionary_name_end\n";
 	bbuf.write(static_cast<std::uint32_t>(0));
 
 	auto [entries_name_start, entries_name_end]
 		= bbuf.write(std::string("entries"));
-	std::cout << std::hex << entries_name_start << entries_name_end
-			  << " = entries_name_end\n";
 	bbuf.write(static_cast<std::uint32_t>(0));
 
 	auto [docs_name_start, docs_name_end] = bbuf.write(std::string("docs"));
-	std::cout << std::hex << docs_name_start << docs_name_end
-			  << " = docs_name_end\n";
 	bbuf.write(static_cast<std::uint32_t>(0));
 
 	auto dictionary_section_offset

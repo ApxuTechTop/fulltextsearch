@@ -13,8 +13,7 @@ accessor::DictionaryAccessor::retrieve(const std::string &word) const {
 		auto offset = reader.read<tech::Trie<std::uint32_t> >(word);
 		return offset;
 	} catch (const std::runtime_error &e) {
-		std::cerr << "Error: " << e.what() << '\n';
-		return 0;
+		throw;
 	}
 }
 
@@ -137,19 +136,21 @@ std::size_t accessor::BinaryIndexAccessor::total_docs() const {
 }
 std::unordered_map<int, std::vector<std::size_t> >
 accessor::BinaryIndexAccessor::get_term_infos(const std::string &term) const {
-	auto offset = dictionary_accessor.retrieve(term);
-	if (offset == 0) {
-		return {};
+	std::unordered_map<int, std::vector<std::size_t> > term_info;
+	std::uint32_t offset;
+	try {
+		offset = dictionary_accessor.retrieve(term);
+	} catch (const std::runtime_error& e) {
+		return term_info;
 	}
 	binary::BinaryReader reader(data.data(),
 								entries_accessor.section_offset + offset);
-	std::unordered_map<int, std::vector<std::size_t> > term_info;
+	
 	auto doc_count = reader.read<std::uint32_t>();
 	for (std::uint32_t i = 0; i < doc_count; ++i) {
 		auto doc_offset = reader.read<std::uint32_t>();
 		auto doc_id = std::get<0>(reader.read<int>(
-			documents_accessor.section_offset + doc_offset - 4));
-		std::cout << doc_id << '\n';
+			documents_accessor.section_offset + doc_offset));
 		auto pos_count = reader.read<std::uint32_t>();
 		term_info[doc_id].reserve(pos_count);
 		for (std::uint32_t j = 0; j < pos_count; ++j) {

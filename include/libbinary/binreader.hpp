@@ -65,6 +65,11 @@ class BinaryReader {
 					break; // нашли нужный символ
 				}
 			}
+			if (i == child_count) {
+				// если не нашли
+				throw std::runtime_error(
+					std::string("Didn't find value for word = ") + word);
+			}
 			pos += child_count - (i + 1); // пропускаем оставшиеся символы
 			pos += sizeof(std::uint32_t) * i; // находим нужное нам смещение
 			auto new_pos = std::get<0>(read<std::uint32_t>(pos)); // переходим
